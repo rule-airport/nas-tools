@@ -2423,8 +2423,6 @@
       $("#user_auth_btn").prop("disabled", false).text("认证");
       if (ret.code === 0) {
         window.location.reload();
-      } else {
-        show_fail_modal(ret.msg);
       }
     }, true, false);
   }
