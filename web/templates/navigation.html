@@ -2414,21 +2414,6 @@
   }
 
   // 用户认证
-  // function user_auth() {
-  //   $("#user_auth_btn").text("认证中...").prop("disabled", true);
-  //   let siteid = $("#user_auth_site").val();
-  //   let params = input_select_GetVal(`user_auth_${siteid}_params`, `${siteid}_`);
-  //   ajax_post("auth_user_level", {site: siteid, params: params}, function (ret) {
-  //     $("#modal-user-auth").modal("hide");
-  //     $("#user_auth_btn").prop("disabled", false).text("认证");
-  //     if (ret.code === 0) {
-  //       window.location.reload();
-  //     } else {
-  //       window.location.reload();
-  //     }
-  //   }, true, false);
-  // }
-
   function user_auth() {
     $("#user_auth_btn").text("认证中...").prop("disabled", true);
     let siteid = $("#user_auth_site").val();
@@ -2436,9 +2421,24 @@
     ajax_post("auth_user_level", {site: siteid, params: params}, function (ret) {
       $("#modal-user-auth").modal("hide");
       $("#user_auth_btn").prop("disabled", false).text("认证");
-      window.location.reload();
+      if (ret.code === 0) {
+        window.location.reload();
+      } else {
+        window.location.reload();
+      }
     }, true, false);
   }
+
+  // function user_auth() {
+  //   $("#user_auth_btn").text("认证中...").prop("disabled", true);
+  //   let siteid = $("#user_auth_site").val();
+  //   let params = input_select_GetVal(`user_auth_${siteid}_params`, `${siteid}_`);
+  //   ajax_post("auth_user_level", {site: siteid, params: params}, function (ret) {
+  //     $("#modal-user-auth").modal("hide");
+  //     $("#user_auth_btn").prop("disabled", false).text("认证");
+  //     window.location.reload();
+  //   }, true, false);
+  // }
 
   // 初始化tomselect
   function init_tomselect() {

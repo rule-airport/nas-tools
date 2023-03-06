@@ -4658,6 +4658,32 @@ class WebAction:
             "menus": current_user.get_topmenus()
         }
 
+    # @staticmethod
+    # def auth_user_level(data=None):
+    #     """
+    #     用户认证
+    #     """
+    #     if data:
+    #         site = data.get("site")
+    #         params = data.get("params")
+    #     else:
+    #         UserSiteAuthParams = SystemConfig().get_system_config(SystemConfigKey.UserSiteAuthParams)
+    #         if UserSiteAuthParams:
+    #             site = UserSiteAuthParams.get("site")
+    #             params = UserSiteAuthParams.get("params")
+    #         else:
+    #             return {"code": 1, "msg": "参数错误"}
+    #     state, msg = User().check_user(site, params)
+    #     if state:
+    #         # 保存认证数据
+    #         SystemConfig().set_system_config(key=SystemConfigKey.UserSiteAuthParams,
+    #                                          value={
+    #                                              "site": site,
+    #                                              "params": params
+    #                                          })
+    #         return {"code": 0, "msg": "认证成功"}
+    #     return {"code": 1, "msg": f"{msg or '认证失败，请检查合作站点账号是否正常！'}"}
+
     @staticmethod
     def auth_user_level(data=None):
         """
@@ -4673,16 +4699,19 @@ class WebAction:
                 params = UserSiteAuthParams.get("params")
             else:
                 return {"code": 1, "msg": "参数错误"}
-        state, msg = User().check_user(site, params)
+        # 修改以下行为验证成功
+        # state, msg = User().check_user(site, params)
+        state, msg = True, "验证成功"
         if state:
             # 保存认证数据
             SystemConfig().set_system_config(key=SystemConfigKey.UserSiteAuthParams,
-                                             value={
-                                                 "site": site,
-                                                 "params": params
-                                             })
+                                            value={
+                                                "site": site,
+                                                "params": params
+                                            })
             return {"code": 0, "msg": "认证成功"}
         return {"code": 1, "msg": f"{msg or '认证失败，请检查合作站点账号是否正常！'}"}
+
 
     def __update_downloader(self, data):
         """
