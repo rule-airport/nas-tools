@@ -1,4 +1,4 @@
-name: NAStool Docker
+name: Build NAStool Image
 on:
   workflow_dispatch:
   push:
@@ -6,11 +6,10 @@ on:
       - master
     paths:
       - version.py
-      - .github/workflows/build.yml
-      - package_list.txt
-      - requirements.txt
       - docker/Dockerfile
-      - docker/entrypoint.sh
+      - docker/Dockerfile.lite
+      - .github/workflows/build.yml
+      - requirements.txt
 jobs:
   build:
     runs-on: ubuntu-latest

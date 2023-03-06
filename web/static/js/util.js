@@ -216,12 +216,6 @@ function input_select_GetVal(id, prefix=null) {
             params[(prefix) ? key.replace(prefix, "") : key] = $(this).val();
         }
     });
-    $(`#${id} textarea`).each(function () {
-        let key = $(this).attr("id");
-        if (key) {
-            params[(prefix) ? key.replace(prefix, "") : key] = $(this).val();
-        }
-    });
     return params;
 }
 

@@ -2,6 +2,7 @@ import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import log
+from app.conf import ModuleConf
 from app.helper import ProgressHelper, SubmoduleHelper
 from app.indexer.client import BuiltinIndexer
 from app.utils import ExceptionUtils, StringUtils
@@ -20,17 +21,17 @@ class Indexer(object):
     def __init__(self):
         self._indexer_schemas = SubmoduleHelper.import_submodules(
             'app.indexer.client',
-            filter_func=lambda _, obj: hasattr(obj, 'client_id')
+            filter_func=lambda _, obj: hasattr(obj, 'schema')
         )
         log.debug(f"【Indexer】加载索引器：{self._indexer_schemas}")
         self.init_config()
 
     def init_config(self):
         self.progress = ProgressHelper()
-        indexer = Config().get_config("pt").get('search_indexer') or 'builtin'
-        self._client = self.__get_client(indexer)
-        if self._client:
-            self._client_type = self._client.get_type()
+        self._client_type = ModuleConf.INDEXER_DICT.get(
+            Config().get_config("pt").get('search_indexer') or 'builtin'
+        ) or IndexerType.BUILTIN
+        self._client = self.__get_client(self._client_type)
 
     def __build_class(self, ctype, conf):
         for indexer_schema in self._indexer_schemas:
@@ -81,11 +82,11 @@ class Indexer(object):
         return [indexer.name for indexer in self.get_indexers()]
 
     @staticmethod
-    def get_builtin_indexers(check=True, indexer_id=None):
+    def get_builtin_indexers(check=True, public=True, indexer_id=None):
         """
         获取内置索引器的索引站点
         """
-        return BuiltinIndexer().get_indexers(check=check, indexer_id=indexer_id)
+        return BuiltinIndexer().get_indexers(check=check, public=public, indexer_id=indexer_id)
 
     @staticmethod
     def list_builtin_resources(index_id, page=0, keyword=None):
@@ -97,8 +98,8 @@ class Indexer(object):
         """
         return BuiltinIndexer().list(index_id=index_id, page=page, keyword=keyword)
 
-    def __get_client(self, ctype: [IndexerType, str], conf=None):
-        return self.__build_class(ctype=ctype, conf=conf)
+    def __get_client(self, ctype: IndexerType, conf=None):
+        return self.__build_class(ctype=ctype.value, conf=conf)
 
     def get_client(self):
         """

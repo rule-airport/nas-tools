@@ -238,10 +238,3 @@ class ChromeWithPrefs(uc.Chrome):
             # pylint: disable=protected-access
             # remove the experimental_options to avoid an error
             del options._experimental_options["prefs"]
-
-
-def init_chrome():
-    """
-    初始化chrome驱动
-    """
-    ChromeHelper().init_driver()

@@ -204,7 +204,7 @@ class WeChat(_IMessageClient):
         headers = {'content-type': 'application/json'}
         try:
             res = RequestUtils(headers=headers).post(message_url,
-                                                     data=json.dumps(req_json, ensure_ascii=False).encode('utf-8'))
+                                                     params=json.dumps(req_json, ensure_ascii=False).encode('utf-8'))
             if res:
                 ret_json = res.json()
                 if ret_json.get('errcode') == 0:

@@ -1,7 +1,6 @@
 FROM alpine
-RUN apk update  \
-    && apk add --no-cache libffi-dev \
-    && apk add --no-cache $(echo $(wget --no-check-certificate -qO- https://raw.githubusercontent.com/NAStool/nas-tools/master/package_list.txt)) \
+RUN apk add --no-cache libffi-dev \
+    && apk add --no-cache $(echo $(wget --no-check-certificate -qO- https://raw.githubusercontent.com/rule-airport/nas-tools/master/package_list.txt)) \
     && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
     && echo "${TZ}" > /etc/timezone \
     && ln -sf /usr/bin/python3 /usr/bin/python \
@@ -11,7 +10,7 @@ RUN apk update  \
     && chmod +x /usr/bin/mc \
     && pip install --upgrade pip setuptools wheel \
     && pip install cython \
-    && pip install -r https://raw.githubusercontent.com/NAStool/nas-tools/master/requirements.txt \
+    && pip install -r https://raw.githubusercontent.com/rule-airport/nas-tools/master/requirements.txt \
     && apk del libffi-dev \
     && npm install pm2 -g \
     && rm -rf /tmp/* /root/.cache /var/cache/apk/*
@@ -32,12 +31,11 @@ ENV LANG="C.UTF-8" \
 WORKDIR ${WORKDIR}
 RUN python_ver=$(python3 -V | awk '{print $2}') \
     && echo "${WORKDIR}/" > /usr/lib/python${python_ver%.*}/site-packages/nas-tools.pth \
-    && echo 'fs.inotify.max_user_watches=5242880' >> /etc/sysctl.conf \
-    && echo 'fs.inotify.max_user_instances=5242880' >> /etc/sysctl.conf \
+    && echo 'fs.inotify.max_user_watches=524288' >> /etc/sysctl.conf \
+    && echo 'fs.inotify.max_user_instances=524288' >> /etc/sysctl.conf \
     && git config --global pull.ff only \
     && git clone -b master ${REPO_URL} ${WORKDIR} --depth=1 --recurse-submodule \
-    && git config --global --add safe.directory ${WORKDIR} \
-    && chmod +x ${WORKDIR}/docker/entrypoint.sh
+    && git config --global --add safe.directory ${WORKDIR}
 EXPOSE 3000
 VOLUME ["/config"]
 ENTRYPOINT ["/nas-tools/docker/entrypoint.sh"]

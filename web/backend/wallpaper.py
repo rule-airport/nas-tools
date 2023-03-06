@@ -15,7 +15,7 @@ def get_login_wallpaper(today=datetime.datetime.strftime(datetime.datetime.now()
     wallpaper = Config().get_config('app').get('wallpaper')
     tmdbkey = Config().get_config('app').get('rmt_tmdbkey')
     if (not wallpaper or wallpaper == "themoviedb") and tmdbkey:
-        img_url = __get_themoviedb_wallpaper()
+        img_url = __get_themoviedb_wallpaper(today)
     else:
         img_url = __get_bing_wallpaper(today)
     if img_url:
@@ -25,7 +25,7 @@ def get_login_wallpaper(today=datetime.datetime.strftime(datetime.datetime.now()
     return ""
 
 
-def __get_themoviedb_wallpaper():
+def __get_themoviedb_wallpaper(today):
     """
     获取TheMovieDb的随机背景图
     """

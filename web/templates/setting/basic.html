@@ -156,17 +156,6 @@
                 </div>
               </div>
             </div>
-            <div class="row">
-              <div class="col-lg">
-                <div class="mb-3">
-                  <label class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="app.releases_update_only" {% if
-                      Config.app.releases_update_only %}checked{% endif %}>
-                    <span class="form-check-label">仅检查Releases更新 <span class="form-help" title="开启后，只有Releases更新，才会有更新提示" data-bs-toggle="tooltip">?</span></span>
-                  </label>
-                </div>
-              </div>
-            </div>
           </div>
           <div class="card-footer">
             <div class="row align-items-center">
@@ -234,7 +223,7 @@
               </div>
             </div>
             <div class="row">
-              <div class="col-lg-4">
+              <div class="col-lg">
                 <div class="mb-3">
                   <label class="form-label">二级分类策略 <span class="form-help"
                                                                title="电影/电视剧/动漫是否需要二级分类，启用二级分类后会在电影/电视剧/动漫目录下按二级分类名建立子目录；此处配置分类的策略名，配置文件目录中需要有与策略名同名的.yaml配置文件，默认策略default-category分类设置可参考default-category.yaml；如不需要启动分类，则该项配置为空"
@@ -243,21 +232,18 @@
                          placeholder="default-category" autocomplete="off">
                 </div>
               </div>
-              <div class="col-lg-4">
+              <div class="col-lg">
                 <div class="mb-3">
-                  <label class="form-label required">下载优先规则 <span class="form-help"
-                                                                        title="订阅及远程搜索下载将按此优先规则选择下载资源，其中站点优先决定于维护的站点优先级或索引器中配置的站点顺序，默认为站点优先"
-                                                                        data-bs-toggle="tooltip">?</span></label>
-                  <select class="form-select" id="pt.download_order">
-                    <option value="" {% if not Config.pt.download_order %}selected{% endif %}>默认</option>
-                    <option value="site" {% if Config.pt.download_order=='site' %}selected{% endif %}>站点优先</option>
-                    <option value="seeder" {% if Config.pt.download_order=='seeder' %}selected{% endif %}>做种数优先
-                    </option>
+                  <label class="form-label required">默认文件转移方式 <span class="form-help"
+                                                                            title="默认使用的文件转移方式，下载器监控转移等场景使用，根据不同的程序版本可选项会有所不同。硬链接模式要求源目录和目的目录或媒体库目录在一个磁盘分区或者存储空间/共享文件夹，Docker运行时需要直接映射源目录和目的目录或媒体库目录的上级目录，否则docker仍然会认为是跨盘；移动模式会直接移动原文件，会影响做种，请谨慎使用；Rclone针对网盘场景，需要自行映射rclone配置目录到容器中（/root/.config/rclone）或在容器内使用rclone config完成rclone配置，网盘配置名称必须为：NASTOOL，可自行通过Docker添加环境变量传递参数优化传输，参考：https://rclone.org/docs/#environment-variables；Minio针对S3/云原生场景，需要自行在容器内使用mc alias set NASTOOL http://your_domain_name_or_ip:port ACCESS_KEY SECRET_KEY完成minio配置(alias的名称必须为NASTOOL)，并在minio控制台增加一个名为data的bucket(名称必须为data)"
+                                                                            data-bs-toggle="tooltip">?</span></label>
+                  <select class="form-select" id="pt.rmt_mode">
+                  {% for mode in RmtModeDict %}
+                    <option value="{{ mode.value }}" {% if Config.pt.rmt_mode==mode.value %}selected{% endif %}>{{ mode.name }}</option>
+                  {% endfor %}
                   </select>
                 </div>
               </div>
-            </div>
-            <div class="row">
               <div class="col-lg">
                 <div class="mb-3">
                   <label class="form-label required">转移最小文件大小(MB) <span class="form-help"
@@ -267,6 +253,8 @@
                          id="media.min_filesize" placeholder="200" autocomplete="off">
                 </div>
               </div>
+            </div>
+            <div class="row">
               <div class="col-lg">
                 <div class="mb-3">
                   <label class="form-label">文件路径转移忽略词 <span class="form-help"
@@ -285,12 +273,25 @@
                          id="media.ignored_files" placeholder="支持正则表达式，使用;分隔" autocomplete="off">
                 </div>
               </div>
+              <div class="col-lg">
+                <div class="mb-3">
+                  <label class="form-label required">下载优先规则 <span class="form-help"
+                                                                        title="订阅及远程搜索下载将按此优先规则选择下载资源，其中站点优先决定于维护的站点优先级或索引器中配置的站点顺序，默认为站点优先"
+                                                                        data-bs-toggle="tooltip">?</span></label>
+                  <select class="form-select" id="pt.download_order">
+                    <option value="" {% if not Config.pt.download_order %}selected{% endif %}>默认</option>
+                    <option value="site" {% if Config.pt.download_order=='site' %}selected{% endif %}>站点优先</option>
+                    <option value="seeder" {% if Config.pt.download_order=='seeder' %}selected{% endif %}>做种数优先
+                    </option>
+                  </select>
+                </div>
+              </div>
             </div>
             <div class="row">
               <div class="col">
                 <div class="mb-3">
                   <label class="form-label required">电影重命名格式 <span class="form-help"
-                                                                          title="程序会按定义的命名格式对电影进行重命名；/代表上下级目录，{}内为占位符，转义为&#123;&#123;&#125;&#125;；占位符会使用文件识别出来的实际值替换；占位符外的字符会当成普通字符，直接体现在名称上。<br>电影占位符：<br>{title}：标题<br>{en_title}：英文标题<br>{original_title}：原语种标题<br>{original_name}：原文件名<br>{year}：年份<br>{edition}：版本(Bluray/WEB-DL等)<br>{videoFormat}：分辨率(1080p/4k等)<br>{videoCodec}：视频编码<br>{audioCodec}：音频编码及声道<br>{tmdbid}：TMDB的ID<br>{imdbid}：IMDB的ID<br>{part}：part1/disc1/dvd1<br>{releaseGroup}：制作组/字幕组<br>{name}：识别名称（文件名中识别出的名称，可用自定义识别词替换）<br><br>重命名使用Python的format格式化，可进行指定格式输出"
+                                                                          title="程序会按定义的命名格式对电影进行重命名；/代表上下级目录，{}内为占位符，转义为&#123;&#123;&#125;&#125;；占位符会使用文件识别出来的实际值替换；占位符外的字符会当成普通字符，直接体现在名称上。<br>电影占位符：<br>{title}：标题<br>{en_title}：英文标题<br>{original_title}：原语种标题<br>{original_name}：原文件名<br>{year}：年份<br>{edition}：版本(Bluray/WEB-DL等)<br>{videoFormat}：分辨率(1080p/4k等)<br>{videoCodec}：视频编码<br>{audioCodec}：音频编码及声道<br>{tmdbid}：TMDB的ID<br>{part}：part1/disc1/dvd1<br>{releaseGroup}：制作组/字幕组<br>{name}：识别名称（文件名中识别出的名称，可用自定义识别词替换）<br><br>重命名使用Python的format格式化，可进行指定格式输出"
                                                                           data-bs-toggle="tooltip"
                                                                           data-bs-html="true">?</span></label>
                   <input type="text" value="{{ Config.media.movie_name_format or '' }}" class="form-control"
@@ -304,7 +305,7 @@
               <div class="col">
                 <div class="mb-3">
                   <label class="form-label required">电视剧重命名格式 <span class="form-help"
-                                                                            title="程序会按定义的命名格式对电视剧进行重命名；/代表上下级目录，{}内为占位符，转义为&#123;&#123;&#125;&#125;；占位符会使用文件识别出来的实际值替换，占位符外的字符会当成普通字符，直接体现在名称上。<br>电视剧占位符：<br>{title}：标题<br>{en_title}：英文标题<br>{original_title}：原语种标题<br>{original_name}：原文件名<br>{year}：年份<br>{edition}：版本(Bluray/WEB-DL等)<br>{videoFormat}：分辨率(1080p/4k等)<br>{videoCodec}：视频编码<br>{audioCodec}：音频编码及声道<br>{tmdbid}：TMDB的ID<br>{imdbid}：IMDB的ID<br>{season}：季数<br>{episode}：集数<br>{episode_title}：集标题<br>{season_episode}：剧集SxxExx<br>{part}：part1/disc1/dvd1<br>{releaseGroup}：制作组/字幕组<br>{name}：识别名称（文件名中识别出的名称，可用自定义识别词替换）<br><br>重命名使用Python的format格式化，可进行指定格式输出"
+                                                                            title="程序会按定义的命名格式对电视剧进行重命名；/代表上下级目录，{}内为占位符，转义为&#123;&#123;&#125;&#125;；占位符会使用文件识别出来的实际值替换，占位符外的字符会当成普通字符，直接体现在名称上。<br>电视剧占位符：<br>{title}：标题<br>{en_title}：英文标题<br>{original_title}：原语种标题<br>{original_name}：原文件名<br>{year}：年份<br>{edition}：版本(Bluray/WEB-DL等)<br>{videoFormat}：分辨率(1080p/4k等)<br>{videoCodec}：视频编码<br>{audioCodec}：音频编码及声道<br>{tmdbid}：TMDB的ID<br>{season}：季数<br>{episode}：集数<br>{episode_title}：集标题<br>{season_episode}：剧集SxxExx<br>{part}：part1/disc1/dvd1<br>{releaseGroup}：制作组/字幕组<br>{name}：识别名称（文件名中识别出的名称，可用自定义识别词替换）<br><br>重命名使用Python的format格式化，可进行指定格式输出"
                                                                             data-bs-toggle="tooltip"
                                                                             data-bs-html="true">?</span></label>
                   <input type="text" value="{{ Config.media.tv_name_format or '' }}" class="form-control"
@@ -322,6 +323,17 @@
                       Config.media.filesize_cover %}checked{% endif %}>
                     <span class="form-check-label">高质量文件覆盖 <span class="form-help"
                                                                         title="开启后，如下载了更高质量的同名文件时，会覆盖媒体库中已有的文件，否则不会进行转移处理"
+                                                                        data-bs-toggle="tooltip">?</span></span>
+                  </label>
+                </div>
+              </div>
+              <div class="col-lg">
+                <div class="mb-3">
+                  <label class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="media.refresh_mediaserver" {% if
+                      Config.media.refresh_mediaserver %}checked{% endif %}>
+                    <span class="form-check-label">实时刷新媒体库 <span class="form-help"
+                                                                        title="开启后，文件转移完成时会实时刷新媒体服务器（Emby/Jellyfin/Plex）的媒体库"
                                                                         data-bs-toggle="tooltip">?</span></span>
                   </label>
                 </div>
@@ -348,6 +360,12 @@
                 <a href="javascript:void(0)" class="btn d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-scraper" title="刮削设置">
                   {{ SVG.slideshow() }}
                 </a>
+                <a href="javascript:void(0)" class="btn d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-release-groups">
+                  自定义制作组/字幕组
+                </a>
+                <a href="javascript:void(0)" class="btn d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-release-groups" title="自定义制作组/字幕组">
+                  {{ SVG.tex() }}
+                </a>
               </div>
               <div class="col"></div>
               <div class="col-auto">
@@ -359,7 +377,6 @@
           </div>
         </div>
       </div>
-      {% if CurrentUser.level >= 2 %}
       <div class="col-md-12">
         <div class="card" id="basic_service">
           <div class="card-header">
@@ -408,6 +425,28 @@
               <div class="col-xl">
                 <div class="mb-3">
                   <label class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="pt.pt_monitor"
+                           {% if Config.pt.pt_monitor %}checked{% endif %}>
+                    <span class="form-check-label">下载软件监控 <span class="form-help"
+                                                                      title="监控下载软件，下载完成后自动进行文件转移，与目录同步监控下载目录二选一开启"
+                                                                      data-bs-toggle="tooltip">?</span></span>
+                  </label>
+                </div>
+              </div>
+              <div class="col-xl">
+                <div class="mb-3">
+                  <label class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="pt.pt_monitor_only" {% if
+                      Config.pt.pt_monitor_only %}checked{% endif %}>
+                    <span class="form-check-label">只管理NAStool添加的下载 <span class="form-help"
+                                                                                 title="启用后只有含NASTOOL标签的下载任务才会被自动转移和显示，关闭则下载软件中所有的任务都会转移和显示；仅支持Qbittorrent、Transmission下载器"
+                                                                                 data-bs-toggle="tooltip">?</span></span>
+                  </label>
+                </div>
+              </div>
+              <div class="col-xl">
+                <div class="mb-3">
+                  <label class="form-check form-switch">
                     <input class="form-check-input" type="checkbox" id="pt.search_auto"
                            {% if Config.pt.search_auto %}checked{% endif %}>
                     <span class="form-check-label">远程搜索自动择优下载 <span class="form-help"
@@ -441,7 +480,6 @@
           </div>
         </div>
       </div>
-    {% endif %}
       <div class="col-md-12">
         <div class="card" id="security">
           <div class="card-header">
@@ -523,7 +561,6 @@
           </div>
         </div>
       </div>
-      {% if CurrentUser.level >= 2 %}
       <div class="col-md-12">
         <div class="card" id="laboratory">
           <div class="card-header">
@@ -611,7 +648,6 @@
           </div>
         </div>
       </div>
-    {% endif %}
     </div>
   </div>
 </div>
@@ -949,18 +985,9 @@
                 <div class="col-12 col-lg-3">
                   <div class="mb-3">
                     <label class="form-check">
-                      <input class="form-check-input" type="checkbox" id="scraper_pic.tv.episode_thumb" onclick="open_ffmpeg_div('modal_episode_thumb_ffmpeg')" {% if
+                      <input class="form-check-input" type="checkbox" id="scraper_pic.tv.episode_thumb" {% if
                         Config.scraper_pic and Config.scraper_pic.tv.episode_thumb %}checked{% endif %}>
-                      <span class="form-check-label">thumb <span class="form-help" title="开启后将查询TMDB生成集缩略图" data-bs-toggle="tooltip">?</span></span>
-                    </label>
-                  </div>
-                </div>
-                <div class="col-12 col-lg-3 {% if not Config.scraper_pic or not Config.scraper_pic.tv.episode_thumb %}d-none{% endif %}" id="modal_episode_thumb_ffmpeg">
-                  <div class="mb-3">
-                    <label class="form-check">
-                      <input class="form-check-input" type="checkbox" id="scraper_pic.tv.episode_thumb_ffmpeg" {% if
-                        Config.scraper_pic and Config.scraper_pic.tv.episode_thumb and Config.scraper_pic.tv.episode_thumb_ffmpeg %}checked{% endif %}>
-                      <span class="form-check-label">thumb-ffmpeg <span class="form-help" title="开始后，如TMDB无数据则读取视频文件生成（需要ffmpeg，最新完整版Docker镜像已包含，lite版本镜像默认不支持该功能）" data-bs-toggle="tooltip">?</span></span>
+                      <span class="form-check-label">thumb <span class="form-help" title="开启后将生成集缩略图，优先查询TMDB，如TMDB无数据则读取视频文件生成（需要ffmpeg，最新完整版Docker镜像已包含，lite版本镜像默认不支持该功能）" data-bs-toggle="tooltip">?</span></span>
                     </label>
                   </div>
                 </div>
@@ -1018,6 +1045,31 @@
     </div>
   </div>
 </div>
+<div class="modal modal-blur fade" id="modal-release-groups" tabindex="-1" role="dialog" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">自定义制作组/字幕组 <span class="form-help" title="无法识别的制作组/字幕组在此添加" data-bs-toggle="tooltip">?</span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class='row'>
+          <div class="col-lg-12">
+            <div class="mb-3">
+              <textarea class="form-control" id="release_groups" rows="5" placeholder="多个制作组/字幕组请用;分隔，支持正则表达式，特殊字符注意转义">{{ Config.laboratory.release_groups or '' }}</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-link me-auto" data-bs-dismiss="modal">取消</button>
+        <a id="release_groups_save_btn" href="javascript:save_release_groups_config()" class="btn btn-primary">
+          保存
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
 <script type="text/javascript">
 
   // CSS编辑器
@@ -1056,6 +1108,16 @@
     $("#modal-scraper").modal("hide");
   }
 
+  // 保存自定义制作组/字幕组配置
+  function save_release_groups_config(){
+    let params = {'laboratory.release_groups': $("#release_groups").val().replace(/;$/g, '')};
+    $("#release_groups_save_btn").text("保存中...").attr("disabled", true);
+    ajax_post("update_config", params, function (ret) {
+      $("#release_groups_save_btn").text("保存").attr("disabled", false);
+    });
+    $("#modal-customized-words").modal("hide");
+  }
+
   // 保存自定义CSS/JavsScript配置
   function save_user_script(){
     let css_text = css_editor.getValue();
@@ -1067,15 +1129,4 @@
     $("#modal-user-script").modal("hide");
   }
 
-  // 选中电视剧-集图片thumb，显示ffmpeg
-  function open_ffmpeg_div(div_id){
-    let ffmpeg_container = $("#"+div_id);
-    let ffmpeg_check = ffmpeg_container.find("input[type='checkbox']");
-    if (ffmpeg_container.hasClass("d-none")){
-      ffmpeg_container.removeClass("d-none");
-    }else{
-      ffmpeg_container.addClass("d-none");
-      ffmpeg_check.prop("checked", false);
-    }
-  }
 </script>

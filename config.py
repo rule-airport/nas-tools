@@ -5,7 +5,7 @@ from threading import Lock
 import ruamel.yaml
 
 # 种子名/文件名要素分隔字符
-SPLIT_CHARS = r"\.|\s+|\(|\)|\[|]|-|\+|【|】|/|～|;|&|\||#|_|「|」|~"
+SPLIT_CHARS = r"\.|\s+|\(|\)|\[|]|-|\+|【|】|/|～|;|&|\||#|_|「|」|（|）|~"
 # 默认User-Agent
 DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36"
 # 收藏了的媒体的目录名，名字可以改，在Emby中点击红星则会自动将电影转移到此分类下，需要在Emby Webhook中配置用户行为通知
@@ -14,8 +14,7 @@ RMT_FAVTYPE = '精选'
 RMT_MEDIAEXT = ['.mp4', '.mkv', '.ts', '.iso',
                 '.rmvb', '.avi', '.mov', '.mpeg',
                 '.mpg', '.wmv', '.3gp', '.asf',
-                '.m4v', '.flv', '.m2ts', '.strm',
-                '.mka']
+                '.m4v', '.flv', '.m2ts', '.strm']
 # 支持的字幕文件后缀格式
 RMT_SUBEXT = ['.srt', '.ass', '.ssa']
 # 电视剧动漫的分类genre_ids
@@ -60,7 +59,7 @@ TMDB_IMAGE_W500_URL = 'https://image.tmdb.org/t/p/w500%s'
 TMDB_IMAGE_ORIGINAL_URL = 'https://image.tmdb.org/t/p/original%s'
 TMDB_IMAGE_FACE_URL = 'https://image.tmdb.org/t/p/h632%s'
 TMDB_PEOPLE_PROFILE_URL = 'https://www.themoviedb.org/person/%s'
-# 添加下载时增加的标签，开始只监控NAStool添加的下载时有效
+# 添加下载时增加的标签，开始只监控NASTool添加的下载时有效
 PT_TAG = "NASTOOL"
 # 电影默认命名格式
 DEFAULT_MOVIE_FORMAT = '{title} ({year})/{title} ({year})-{part} - {videoFormat}'
@@ -180,12 +179,6 @@ class Config(object):
     def get_inner_config_path(self):
         return os.path.join(self.get_root_path(), "config")
 
-    def get_script_path(self):
-        return os.path.join(self.get_inner_config_path(), "scripts")
-
-    def get_plugin_path(self):
-        return os.path.join(self.get_config_path(), "plugin")
-
     def get_domain(self):
         domain = (self.get_config('app') or {}).get('domain')
         if domain and not domain.startswith('http'):
@@ -195,9 +188,3 @@ class Config(object):
     @staticmethod
     def get_timezone():
         return os.environ.get('TZ')
-
-    @staticmethod
-    def update_favtype(favtype):
-        global RMT_FAVTYPE
-        if favtype:
-            RMT_FAVTYPE = favtype

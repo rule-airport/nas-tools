@@ -9,16 +9,10 @@ from app.utils.types import MediaType, MediaServerType
 
 
 class Emby(_IMediaClient):
-
-    # 媒体服务器ID
-    client_id = "emby"
-    # 媒体服务器类型
-    client_type = MediaServerType.EMBY
-    # 媒体服务器名称
-    client_name = MediaServerType.EMBY.value
-
-    # 私有属性
+    schema = "emby"
+    server_type = MediaServerType.EMBY.value
     _client_config = {}
+
     _apikey = None
     _host = None
     _user = None
@@ -46,10 +40,7 @@ class Emby(_IMediaClient):
 
     @classmethod
     def match(cls, ctype):
-        return True if ctype in [cls.client_id, cls.client_type, cls.client_name] else False
-    
-    def get_type(self):
-        return self.client_type
+        return True if ctype in [cls.schema, cls.server_type] else False
 
     def get_status(self):
         """
@@ -69,11 +60,11 @@ class Emby(_IMediaClient):
             if res:
                 return res.json()
             else:
-                log.error(f"【{self.client_name}】Library/SelectableMediaFolders 未获取到返回数据")
+                log.error(f"【{self.server_type}】Library/SelectableMediaFolders 未获取到返回数据")
                 return []
         except Exception as e:
             ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.client_name}】连接Library/SelectableMediaFolders 出错：" + str(e))
+            log.error(f"【{self.server_type}】连接Library/SelectableMediaFolders 出错：" + str(e))
             return []
 
     def get_admin_user(self):
@@ -91,10 +82,10 @@ class Emby(_IMediaClient):
                     if user.get("Policy", {}).get("IsAdministrator"):
                         return user.get("Id")
             else:
-                log.error(f"【{self.client_name}】Users 未获取到返回数据")
+                log.error(f"【{self.server_type}】Users 未获取到返回数据")
         except Exception as e:
             ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.client_name}】连接Users出错：" + str(e))
+            log.error(f"【{self.server_type}】连接Users出错：" + str(e))
         return None
 
     def get_user_count(self):
@@ -109,11 +100,11 @@ class Emby(_IMediaClient):
             if res:
                 return res.json().get("TotalRecordCount")
             else:
-                log.error(f"【{self.client_name}】Users/Query 未获取到返回数据")
+                log.error(f"【{self.server_type}】Users/Query 未获取到返回数据")
                 return 0
         except Exception as e:
             ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.client_name}】连接Users/Query出错：" + str(e))
+            log.error(f"【{self.server_type}】连接Users/Query出错：" + str(e))
             return 0
 
     def get_activity_log(self, num):
@@ -143,11 +134,11 @@ class Emby(_IMediaClient):
                         activity = {"type": event_type, "event": event_str, "date": event_date}
                         ret_array.append(activity)
             else:
-                log.error(f"【{self.client_name}】System/ActivityLog/Entries 未获取到返回数据")
+                log.error(f"【{self.server_type}】System/ActivityLog/Entries 未获取到返回数据")
                 return []
         except Exception as e:
             ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.client_name}】连接System/ActivityLog/Entries出错：" + str(e))
+            log.error(f"【{self.server_type}】连接System/ActivityLog/Entries出错：" + str(e))
             return []
         return ret_array[:num]
 
@@ -164,11 +155,11 @@ class Emby(_IMediaClient):
             if res:
                 return res.json()
             else:
-                log.error(f"【{self.client_name}】Items/Counts 未获取到返回数据")
+                log.error(f"【{self.server_type}】Items/Counts 未获取到返回数据")
                 return {}
         except Exception as e:
             ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.client_name}】连接Items/Counts出错：" + str(e))
+            log.error(f"【{self.server_type}】连接Items/Counts出错：" + str(e))
             return {}
 
     def __get_emby_series_id_by_name(self, name, year):
@@ -193,7 +184,7 @@ class Emby(_IMediaClient):
                             return res_item.get('Id')
         except Exception as e:
             ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.client_name}】连接Items出错：" + str(e))
+            log.error(f"【{self.server_type}】连接Items出错：" + str(e))
             return None
         return ""
 
@@ -222,21 +213,15 @@ class Emby(_IMediaClient):
                             return ret_movies
         except Exception as e:
             ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.client_name}】连接Items出错：" + str(e))
+            log.error(f"【{self.server_type}】连接Items出错：" + str(e))
             return None
         return []
 
-    def get_tv_episodes(self,
-                        item_id=None,
-                        title=None,
-                        year=None,
-                        tmdb_id=None,
-                        season=None):
+    def __get_emby_tv_episodes(self, title, year, tmdb_id=None, season=None):
         """
         根据标题和年份和季，返回Emby中的剧集列表
-        :param item_id: 媒体源ID
         :param title: 标题
-        :param year: 年份
+        :param year: 年份，可以为空，为空时不按年份过滤
         :param tmdb_id: TMDBID
         :param season: 季
         :return: 集号的列表
@@ -244,20 +229,19 @@ class Emby(_IMediaClient):
         if not self._host or not self._apikey:
             return None
         # 电视剧
+        item_id = self.__get_emby_series_id_by_name(title, year)
+        if item_id is None:
+            return None
         if not item_id:
-            item_id = self.__get_emby_series_id_by_name(title, year)
-            if item_id is None:
-                return None
-            if not item_id:
+            return []
+        # 验证tmdbid是否相同
+        item_tmdbid = self.get_iteminfo(item_id).get("ProviderIds", {}).get("Tmdb")
+        if tmdb_id and item_tmdbid:
+            if str(tmdb_id) != str(item_tmdbid):
                 return []
-            # 验证tmdbid是否相同
-            item_tmdbid = self.get_iteminfo(item_id).get("ProviderIds", {}).get("Tmdb")
-            if tmdb_id and item_tmdbid:
-                if str(tmdb_id) != str(item_tmdbid):
-                    return []
         # /Shows/Id/Episodes 查集的信息
         if not season:
-            season = ""
+            season = 1
         req_url = "%semby/Shows/%s/Episodes?Season=%s&IsMissing=false&api_key=%s" % (
             self._host, item_id, season, self._apikey)
         try:
@@ -266,14 +250,11 @@ class Emby(_IMediaClient):
                 res_items = res_json.json().get("Items")
                 exists_episodes = []
                 for res_item in res_items:
-                    exists_episodes.append({
-                        "season_num": res_item.get("ParentIndexNumber") or 0,
-                        "episode_num": res_item.get("IndexNumber") or 0
-                    })
+                    exists_episodes.append(int(res_item.get("IndexNumber")))
                 return exists_episodes
         except Exception as e:
             ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.client_name}】连接Shows/Id/Episodes出错：" + str(e))
+            log.error(f"【{self.server_type}】连接Shows/Id/Episodes出错：" + str(e))
             return None
         return []
 
@@ -287,16 +268,9 @@ class Emby(_IMediaClient):
         """
         if not self._host or not self._apikey:
             return None
-        # 没有季默认为和1季
-        if not season:
-            season = 1
-        exists_episodes = self.get_tv_episodes(title=meta_info.title,
-                                               year=meta_info.year,
-                                               tmdb_id=meta_info.tmdb_id,
-                                               season=season)
+        exists_episodes = self.__get_emby_tv_episodes(meta_info.title, meta_info.year, meta_info.tmdb_id, season)
         if not isinstance(exists_episodes, list):
             return None
-        exists_episodes = [episode.get("episode_num") for episode in exists_episodes]
         total_episodes = [episode for episode in range(1, total_num + 1)]
         return list(set(total_episodes).difference(set(exists_episodes)))
 
@@ -318,11 +292,11 @@ class Emby(_IMediaClient):
                     if image.get("ProviderName") == "TheMovieDb" and image.get("Type") == image_type:
                         return image.get("Url")
             else:
-                log.error(f"【{self.client_name}】Items/RemoteImages 未获取到返回数据")
+                log.error(f"【{self.server_type}】Items/RemoteImages 未获取到返回数据")
                 return None
         except Exception as e:
             ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.client_name}】连接Items/Id/RemoteImages出错：" + str(e))
+            log.error(f"【{self.server_type}】连接Items/Id/RemoteImages出错：" + str(e))
             return None
         return None
 
@@ -338,10 +312,10 @@ class Emby(_IMediaClient):
             if res:
                 return True
             else:
-                log.info(f"【{self.client_name}】刷新媒体库对象 {item_id} 失败，无法连接Emby！")
+                log.info(f"【{self.server_type}】刷新媒体库对象 {item_id} 失败，无法连接Emby！")
         except Exception as e:
             ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.client_name}】连接Items/Id/Refresh出错：" + str(e))
+            log.error(f"【{self.server_type}】连接Items/Id/Refresh出错：" + str(e))
             return False
         return False
 
@@ -357,10 +331,10 @@ class Emby(_IMediaClient):
             if res:
                 return True
             else:
-                log.info(f"【{self.client_name}】刷新媒体库失败，无法连接Emby！")
+                log.info(f"【{self.server_type}】刷新媒体库失败，无法连接Emby！")
         except Exception as e:
             ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.client_name}】连接Library/Refresh出错：" + str(e))
+            log.error(f"【{self.server_type}】连接Library/Refresh出错：" + str(e))
             return False
         return False
 
@@ -372,7 +346,7 @@ class Emby(_IMediaClient):
         if not items:
             return
         # 收集要刷新的媒体库信息
-        log.info(f"【{self.client_name}】开始刷新Emby媒体库...")
+        log.info(f"【{self.server_type}】开始刷新Emby媒体库...")
         library_ids = []
         for item in items:
             if not item:
@@ -387,7 +361,7 @@ class Emby(_IMediaClient):
         for library_id in library_ids:
             if library_id != "/":
                 self.__refresh_emby_library_by_id(library_id)
-        log.info(f"【{self.client_name}】Emby媒体库刷新完成")
+        log.info(f"【{self.server_type}】Emby媒体库刷新完成")
 
     def __get_emby_library_id_by_item(self, item):
         """
@@ -396,7 +370,7 @@ class Emby(_IMediaClient):
         """
         if not item.get("title") or not item.get("year") or not item.get("type"):
             return None
-        if item.get("type") != MediaType.MOVIE.value:
+        if item.get("type") == MediaType.TV:
             item_id = self.__get_emby_series_id_by_name(item.get("title"), item.get("year"))
             if item_id:
                 # 存在电视剧，则直接刷新这个电视剧就行
@@ -494,7 +468,7 @@ class Emby(_IMediaClient):
                             yield item
         except Exception as e:
             ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.client_name}】连接Users/Items出错：" + str(e))
+            log.error(f"【{self.server_type}】连接Users/Items出错：" + str(e))
         yield {}
 
     def get_playing_sessions(self):
@@ -516,45 +490,3 @@ class Emby(_IMediaClient):
         except Exception as e:
             ExceptionUtils.exception_traceback(e)
             return []
-
-    def get_webhook_message(self, message):
-        """
-        解析Emby报文
-        """
-        eventItem = {'event': message.get('Event', '')}
-        if message.get('Item'):
-            if message.get('Item', {}).get('Type') == 'Episode':
-                eventItem['item_type'] = "TV"
-                eventItem['item_name'] = "%s %s%s %s" % (
-                    message.get('Item', {}).get('SeriesName'),
-                    "S" + str(message.get('Item', {}).get('ParentIndexNumber')),
-                    "E" + str(message.get('Item', {}).get('IndexNumber')),
-                    message.get('Item', {}).get('Name'))
-                eventItem['item_id'] = message.get('Item', {}).get('SeriesId')
-                eventItem['season_id'] = message.get('Item', {}).get('ParentIndexNumber')
-                eventItem['episode_id'] = message.get('Item', {}).get('IndexNumber')
-            else:
-                eventItem['item_type'] = "MOV"
-                eventItem['item_name'] = "%s %s" % (
-                    message.get('Item', {}).get('Name'), "(" + str(message.get('Item', {}).get('ProductionYear')) + ")")
-                eventItem['item_path'] = message.get('Item', {}).get('Path')
-                eventItem['item_id'] = message.get('Item', {}).get('Id')
-
-            eventItem['tmdb_id'] = message.get('Item', {}).get('ProviderIds', {}).get('Tmdb')
-            if message.get('Item', {}).get('Overview') and len(message.get('Item', {}).get('Overview')) > 100:
-                eventItem['overview'] = str(message.get('Item', {}).get('Overview'))[:100] + "..."
-            else:
-                eventItem['overview'] = message.get('Item', {}).get('Overview')
-            eventItem['percentage'] = message.get('TranscodingInfo', {}).get('CompletionPercentage')
-            if not eventItem['percentage']:
-                if message.get('PlaybackInfo', {}).get('PositionTicks'):
-                    eventItem['percentage'] = message.get('PlaybackInfo', {}).get('PositionTicks') / \
-                                              message.get('Item', {}).get('RunTimeTicks') * 100
-        if message.get('Session'):
-            eventItem['ip'] = message.get('Session').get('RemoteEndPoint')
-            eventItem['device_name'] = message.get('Session').get('DeviceName')
-            eventItem['client'] = message.get('Session').get('Client')
-        if message.get("User"):
-            eventItem['user_name'] = message.get("User").get('Name')
-
-        return eventItem

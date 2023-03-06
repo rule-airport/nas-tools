@@ -15,7 +15,7 @@ class DisplayHelper(object):
         self.init_config()
 
     def init_config(self):
-        self.stop_service()
+        self.quit()
         if self.can_display():
             try:
                 self._display = Display(visible=False, size=(1024, 768))
@@ -27,7 +27,7 @@ class DisplayHelper(object):
     def get_display(self):
         return self._display
 
-    def stop_service(self):
+    def quit(self):
         os.environ["NASTOOL_DISPLAY"] = ""
         if self._display:
             self._display.stop()
@@ -40,4 +40,4 @@ class DisplayHelper(object):
         return False
 
     def __del__(self):
-        self.stop_service()
+        self.quit()

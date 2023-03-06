@@ -52,13 +52,13 @@ class RequestUtils:
         if timeout:
             self._timeout = timeout
 
-    def post(self, url, data=None, json=None):
+    def post(self, url, params=None, json=None):
         if json is None:
             json = {}
         try:
             if self._session:
                 return self._session.post(url,
-                                          data=data,
+                                          data=params,
                                           verify=False,
                                           headers=self._headers,
                                           proxies=self._proxies,
@@ -66,7 +66,7 @@ class RequestUtils:
                                           json=json)
             else:
                 return requests.post(url,
-                                     data=data,
+                                     data=params,
                                      verify=False,
                                      headers=self._headers,
                                      proxies=self._proxies,
@@ -118,12 +118,11 @@ class RequestUtils:
         except requests.exceptions.RequestException:
             return None
 
-    def post_res(self, url, data=None, params=None, allow_redirects=True, files=None, json=None):
+    def post_res(self, url, params=None, allow_redirects=True, files=None, json=None):
         try:
             if self._session:
                 return self._session.post(url,
-                                          data=data,
-                                          params=params,
+                                          data=params,
                                           verify=False,
                                           headers=self._headers,
                                           proxies=self._proxies,
@@ -134,8 +133,7 @@ class RequestUtils:
                                           json=json)
             else:
                 return requests.post(url,
-                                     data=data,
-                                     params=params,
+                                     data=params,
                                      verify=False,
                                      headers=self._headers,
                                      proxies=self._proxies,

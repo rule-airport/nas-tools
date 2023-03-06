@@ -1,4 +1,6 @@
-from app.utils import RequestUtils
+import json
+
+from app.utils import RequestUtils, StringUtils
 
 
 class CookieCloudHelper(object):

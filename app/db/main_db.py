@@ -1,6 +1,6 @@
 import os
 import threading
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.pool import QueuePool
 
@@ -41,7 +41,7 @@ class MainDb:
         """
         config = Config().get_config()
         init_files = Config().get_config("app").get("init_files") or []
-        config_dir = Config().get_script_path()
+        config_dir = os.path.join(Config().get_root_path(), "config")
         sql_files = PathUtils.get_dir_level1_files(in_path=config_dir, exts=".sql")
         config_flag = False
         for sql_file in sql_files:
@@ -79,7 +79,7 @@ class MainDb:
         """
         执行SQL语句
         """
-        self.session.execute(text(sql))
+        self.session.execute(sql)
 
     def flush(self):
         """

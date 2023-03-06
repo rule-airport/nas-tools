@@ -1,13 +1,9 @@
-import json
 import os
 import threading
 import time
-
-from cachetools import cached, TTLCache
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.pool import QueuePool
-
 from app.db.models import BaseMedia, MEDIASYNCITEMS, MEDIASYNCSTATISTIC
 from app.utils import ExceptionUtils
 from config import Config
@@ -38,7 +34,7 @@ class MediaDb:
         with lock:
             BaseMedia.metadata.create_all(_Engine)
 
-    def insert(self, server_type, iteminfo, seasoninfo):
+    def insert(self, server_type, iteminfo):
         if not server_type or not iteminfo:
             return False
         try:
@@ -55,8 +51,7 @@ class MediaDb:
                 YEAR=iteminfo.get("year"),
                 TMDBID=iteminfo.get("tmdbid"),
                 IMDBID=iteminfo.get("imdbid"),
-                PATH=iteminfo.get("path"),
-                JSON=json.dumps(seasoninfo)
+                PATH=iteminfo.get("path")
             ))
             self.session.commit()
             return True
@@ -100,28 +95,30 @@ class MediaDb:
             self.session.rollback()
         return False
 
-    @cached(cache=TTLCache(maxsize=128, ttl=60))
-    def query(self, server_type, title, year, tmdbid):
+    def exists(self, server_type, title, year, tmdbid):
         if not server_type or not title:
-            return {}
-
+            return False
         if tmdbid:
-            item = self.session.query(MEDIASYNCITEMS).filter(MEDIASYNCITEMS.SERVER == server_type,
-                                                             MEDIASYNCITEMS.TMDBID == tmdbid).first()
-            if item:
-                return item
-
+            count = self.session.query(MEDIASYNCITEMS).filter(MEDIASYNCITEMS.TMDBID == str(tmdbid)).count()
+            if count:
+                return True
         if year:
-            item = self.session.query(MEDIASYNCITEMS).filter(MEDIASYNCITEMS.SERVER == server_type,
-                                                             MEDIASYNCITEMS.TITLE == title,
-                                                             MEDIASYNCITEMS.YEAR == year).first()
+            items = self.session.query(MEDIASYNCITEMS).filter(MEDIASYNCITEMS.SERVER == server_type,
+                                                              MEDIASYNCITEMS.TITLE == title,
+                                                              MEDIASYNCITEMS.YEAR == str(year)).all()
         else:
-            item = self.session.query(MEDIASYNCITEMS).filter(MEDIASYNCITEMS.SERVER == server_type,
-                                                             MEDIASYNCITEMS.TITLE == title).first()
-        if item:
-            if tmdbid and (not item.TMDBID or item.TMDBID == str(tmdbid)):
-                return {}
-        return item
+            items = self.session.query(MEDIASYNCITEMS).filter(MEDIASYNCITEMS.SERVER == server_type,
+                                                              MEDIASYNCITEMS.TITLE == title).all()
+        if items:
+            if tmdbid:
+                for item in items:
+                    if not item.TMDBID or item.TMDBID == str(tmdbid):
+                        return True
+                return False
+            else:
+                return True
+        else:
+            return False
 
     def get_statistics(self, server_type):
         if not server_type:
